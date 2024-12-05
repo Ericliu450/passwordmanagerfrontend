@@ -1,114 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import styled from 'styled-components';
-import { Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { KeyRound, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { useEncryption } from '../../hooks/useEncryption';
 import { useAuth } from '../../hooks/useAuth';
-
-const Container = styled.div`
-  min-height: 100vh;
-  background-color: #f9fafb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-`;
-
-const Card = styled.div`
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
-  padding: 32px;
-`;
-
-const Title = styled.h1`
-  font-size: 24px;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 8px;
-`;
-
-const WarningBox = styled.div`
-  display: flex;
-  gap: 12px;
-  background: #fff3ea;
-  border: 1px solid #ffedd5;
-  border-radius: 8px;
-  padding: 16px;
-  margin: 20px 0;
-
-  ul {
-    margin: 8px 0 0 16px;
-    padding: 0;
-    color: #9a3412;
-    font-size: 14px;
-  }
-`;
-
-const InputGroup = styled.div`
-  margin-bottom: 20px;
-`;
-
-const InputWrapper = styled.div`
-  position: relative;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  outline: none;
-
-  &:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-`;
-
-const EyeIcon = styled.button`
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #6b7280;
-  cursor: pointer;
-  padding: 0;
-`;
-
-const Button = styled.button`
-  width: 100%;
-  padding: 12px;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-
-  &:hover:not(:disabled) {
-    background: #2563eb;
-  }
-`;
-
-const Error = styled.div`
-  color: #dc2626;
-  font-size: 14px;
-  margin-top: 8px;
-  padding: 8px 12px;
-  background: #fef2f2;
-  border: 1px solid #fee2e2;
-  border-radius: 6px;
-`;
+import {
+  Container,
+  Card,
+  Logo,
+  Title,
+  Form,
+  InputGroup,
+  Label,
+  InputWrapper,
+  Input,
+  EyeIcon,
+  Button,
+  Error,
+  WarningBox
+} from '../../components/ui/AuthFormStyles';
 
 function MasterPassword() {
   const navigate = useNavigate();
@@ -127,7 +36,6 @@ function MasterPassword() {
   const email = tempAuth?.email || location.state?.email;
   const isNewUser = location.state?.isNewUser || false;
 
-  // Redirect if no email or already authenticated
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard');
@@ -136,7 +44,6 @@ function MasterPassword() {
     }
   }, [email, isAuthenticated, navigate]);
 
-  //Clear tempAuth if user leaves the page
   useEffect(() => {
     return () => {
       if (!isAuthenticated) {
@@ -147,7 +54,7 @@ function MasterPassword() {
 
   const validatePassword = (password) => {
     if (password.length < 12) {
-      throw new Error('Master password must be at least 12 characters long');
+      throw "Master password must be at least 12 characters long";
     }
   };
 
@@ -158,27 +65,42 @@ function MasterPassword() {
 
     try {
       if (isNewUser) {
-        //Validate new master password
-        validatePassword(masterPass);
+        try {
+          validatePassword(masterPass);
+        } catch (validationError) {
+          setError(validationError);
+          setLoading(false);
+          return;
+        }
+
         if (masterPass !== confirmPass) {
-          throw new Error("Passwords don't match");
+          setError("Passwords don't match");
+          setLoading(false);
+          return;
         }
         
-        // Set up master password for new user
-        await setupMasterPassword(email, masterPass);
+        try {
+          await setupMasterPassword(email, masterPass);
+        } catch (setupError) {
+          setError(setupError);
+          setLoading(false);
+          return;
+        }
       } else {
-        // Verify existing master password
         const isValid = await verifyMasterPassword(email, masterPass);
         if (!isValid) {
-          throw new Error("Invalid master password");
+          setError("Invalid master password");
+          setLoading(false);
+          return;
         }
       }
 
-      // Complete Authentication
       finalizeMasterPasswordSetup(email);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message);
+      console.error('Master password error:', err);
+      setError(typeof err === 'string' ? err : 'An unexpected error occurred');
+    } finally {
       setLoading(false);
     }
   };
@@ -186,6 +108,10 @@ function MasterPassword() {
   return (
     <Container>
       <Card>
+        <Logo>
+          <KeyRound size={40} />
+        </Logo>
+        
         <Title>
           {isNewUser ? 'Create Master Password' : 'Enter Master Password'}
         </Title>
@@ -205,8 +131,9 @@ function MasterPassword() {
           </WarningBox>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <Form onSubmit={handleSubmit}>
           <InputGroup>
+            <Label>Master Password</Label>
             <InputWrapper>
               <Input
                 type={showPass ? 'text' : 'password'}
@@ -215,8 +142,14 @@ function MasterPassword() {
                 placeholder="Enter master password"
                 required
                 minLength={12}
+                disabled={loading}
+                hasIcon
               />
-              <EyeIcon type="button" onClick={() => setShowPass(!showPass)}>
+              <EyeIcon 
+                type="button" 
+                onClick={() => setShowPass(!showPass)} 
+                disabled={loading}
+              >
                 {showPass ? <EyeOff size={20} /> : <Eye size={20} />}
               </EyeIcon>
             </InputWrapper>
@@ -224,6 +157,7 @@ function MasterPassword() {
 
           {isNewUser && (
             <InputGroup>
+              <Label>Confirm Master Password</Label>
               <InputWrapper>
                 <Input
                   type={showConfirm ? 'text' : 'password'}
@@ -232,8 +166,14 @@ function MasterPassword() {
                   placeholder="Confirm master password"
                   required
                   minLength={12}
+                  disabled={loading}
+                  hasIcon
                 />
-                <EyeIcon type="button" onClick={() => setShowConfirm(!showConfirm)}>
+                <EyeIcon 
+                  type="button" 
+                  onClick={() => setShowConfirm(!showConfirm)} 
+                  disabled={loading}
+                >
                   {showConfirm ? <EyeOff size={20} /> : <Eye size={20} />}
                 </EyeIcon>
               </InputWrapper>
@@ -245,7 +185,7 @@ function MasterPassword() {
           <Button type="submit" disabled={loading}>
             {loading ? 'Processing...' : (isNewUser ? 'Create Master Password' : 'Continue')}
           </Button>
-        </form>
+        </Form>
       </Card>
     </Container>
   );

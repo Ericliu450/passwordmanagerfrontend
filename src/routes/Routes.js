@@ -14,11 +14,9 @@ import ResetPassword from '../pages/public/ResetPassword';
 
 // Protected pages
 import Dashboard from '../pages/protected/Dashboard';
-import ViewPassword from '../pages/protected/ViewPassword';
 import AddEditPassword from '../pages/protected/AddEditPassword';
 
 export const router = createBrowserRouter([
-  // Public routes (accessible without auth)
   {
     path: '/',
     element: <Welcome />

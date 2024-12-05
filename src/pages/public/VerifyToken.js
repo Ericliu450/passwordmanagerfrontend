@@ -1,141 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import styled from 'styled-components';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { KeyRound, ArrowLeft } from 'lucide-react';
 import { passwordResetAPI } from '../../services/api';
-
-const Container = styled.div`
-  min-height: 100vh;
-  background-color: #f9fafb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-`;
-
-const Card = styled.div`
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
-  padding: 32px;
-`;
-
-const Logo = styled.div`
-  color: #3b82f6;
-  margin-bottom: 16px;
-  display: flex;
-  justify-content: center;
-`;
-
-const Title = styled.h1`
-  font-size: 24px;
-  font-weight: 600;
-  color: #111827;
-  text-align: center;
-  margin-bottom: 8px;
-`;
-
-const Subtitle = styled.p`
-  text-align: center;
-  margin-bottom: 32px;
-  color: #6b7280;
-  font-size: 14px;
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-`;
-
-const TokenInput = styled.input`
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 24px;
-  letter-spacing: 8px;
-  text-align: center;
-  outline: none;
-
-  &:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-
-  &::placeholder {
-    letter-spacing: normal;
-  }
-`;
-
-const Timer = styled.div`
-  text-align: center;
-  color: #6b7280;
-  font-size: 14px;
-`;
-
-const Button = styled.button`
-  width: 100%;
-  padding: 12px;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-
-  &:hover:not(:disabled) {
-    background: #2563eb;
-  }
-`;
-
-const ResendButton = styled.button`
-  background: none;
-  border: none;
-  color: #3b82f6;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 0;
-
-  &:hover:not(:disabled) {
-    color: #2563eb;
-  }
-
-  &:disabled {
-    color: #9ca3af;
-    cursor: not-allowed;
-  }
-`;
-
-const BackLink = styled(Link)`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  text-decoration: none;
-  color: #6b7280;
-  font-size: 14px;
-  margin-top: 24px;
-
-  &:hover {
-    color: #374151;
-  }
-`;
-
-const Error = styled.div`
-  color: #dc2626;
-  font-size: 14px;
-  padding: 8px 12px;
-  background: #fef2f2;
-  border: 1px solid #fee2e2;
-  border-radius: 6px;
-`;
+import {
+  Container,
+  Card,
+  Logo,
+  Title,
+  Subtitle,
+  Form,
+  VerificationInput,
+  Button,
+  Error,
+  BackLink,
+  Timer,
+  TextButton
+} from '../../components/ui/AuthFormStyles';
 
 function VerifyToken() {
   const navigate = useNavigate();
@@ -143,7 +23,7 @@ function VerifyToken() {
   const email = location.state?.email;
 
   const [token, setToken] = useState('');
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(300);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -174,7 +54,7 @@ function VerifyToken() {
       setLoading(true);
       setError('');
       await passwordResetAPI.requestReset(email);
-      setTimeLeft(300); // Reset timer to 5 minutes
+      setTimeLeft(300);
     } catch (err) {
       setError('Failed to resend code. Please try again.');
     } finally {
@@ -227,7 +107,7 @@ function VerifyToken() {
         </Subtitle>
 
         <Form onSubmit={handleSubmit}>
-          <TokenInput
+          <VerificationInput
             type="text"
             value={token}
             onChange={handleTokenChange}
@@ -238,13 +118,13 @@ function VerifyToken() {
           {timeLeft > 0 ? (
             <Timer>Code expires in {formatTime(timeLeft)}</Timer>
           ) : (
-            <ResendButton 
+            <TextButton 
               type="button" 
               onClick={handleResendCode}
               disabled={loading}
             >
               Resend code
-            </ResendButton>
+            </TextButton>
           )}
 
           {error && <Error>{error}</Error>}

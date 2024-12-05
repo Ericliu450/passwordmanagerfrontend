@@ -1,183 +1,270 @@
-// src/services/api.js
 import { buildUrl, handleResponse, requestConfig } from './apiConfig';
 
-// User Management APIs
 export const userAPI = {
-  // Public endpoints (no auth required)
   signup: async (email, password) => {
-    const response = await fetch(
-      buildUrl('/users/signup'),
-      requestConfig.withJson({
-        method: 'POST',
-        body: JSON.stringify({ email, password })
-      })
-    );
-    return handleResponse(response);
+    try {
+      const response = await fetch(
+        buildUrl('/users/signup'),
+        requestConfig.withJson({
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        })
+      );
+      const data = await handleResponse(response);
+      if (!data.success) {
+        throw data.message;
+      }
+      return data.data;
+    } catch (error) {
+      throw typeof error === 'string' ? error : 'Failed to create account';
+    }
   },
 
   login: async (email, password) => {
-    const response = await fetch(
-      buildUrl('/users/login'),
-      requestConfig.withJson({
-        method: 'POST',
-        body: JSON.stringify({ email, password })
-      })
-    );
-    return handleResponse(response);
+    try {
+      const response = await fetch(
+        buildUrl('/users/login'),
+        requestConfig.withJson({
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        })
+      );
+      const data = await handleResponse(response);
+      if (!data.success) {
+        throw data.message;
+      }
+      return data.data;
+    } catch (error) {
+      throw typeof error === 'string' ? error : 'Invalid credentials';
+    }
   },
 
   checkEmail: async (email) => {
-    const response = await fetch(
-      buildUrl(`/users/check-email?email=${encodeURIComponent(email)}`)
-    );
-    return handleResponse(response);
+    try {
+      const response = await fetch(
+        buildUrl(`/users/check-email?email=${encodeURIComponent(email)}`)
+      );
+      const data = await handleResponse(response);
+      if (!data.success) {
+        throw data.message;
+      }
+      return data.data.available;
+    } catch (error) {
+      throw typeof error === 'string' ? error : 'Failed to check email';
+    }
   },
 
-  // Protected endpoints (auth required)
   logout: async () => {
-    const response = await fetch(
-      buildUrl('/users/logout'),
-      requestConfig.withAuth({
-        method: 'POST'
-      })
-    );
-    return handleResponse(response);
+    try {
+      const response = await fetch(
+        buildUrl('/users/logout'),
+        requestConfig.withAuth({
+          method: 'POST'
+        })
+      );
+      const data = await handleResponse(response);
+      if (!data.success) {
+        throw data.message;
+      }
+      return true;
+    } catch (error) {
+      throw typeof error === 'string' ? error : 'Failed to logout';
+    }
   },
 
   setTestString: async (email, testString) => {
-    const response = await fetch(
+    try {
+      const response = await fetch(
         buildUrl('/users/set-test-string'),
         requestConfig.withAuth(requestConfig.withJson({
-            method: 'POST',
-            body: JSON.stringify({ email, testString })
+          method: 'POST',
+          body: JSON.stringify({ email, testString })
         }))
-    );
-
-    const data = await response.json();
-    
-    if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Failed to set test string');
+      );
+      const data = await handleResponse(response);
+      if (!data.success) {
+        throw data.message;
+      }
+      return true;
+    } catch (error) {
+      throw typeof error === 'string' ? error : 'Failed to set test string';
     }
-    
-    return data;
   },
 
   getTestString: async (email) => {
-    const response = await fetch(
-      buildUrl(`/users/get-test-string?email=${encodeURIComponent(email)}`),
-      requestConfig.withAuth()
-    );
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(error);
+    try {
+      const response = await fetch(
+        buildUrl(`/users/get-test-string?email=${encodeURIComponent(email)}`),
+        requestConfig.withAuth()
+      );
+      const data = await handleResponse(response);
+      if (!data.success) {
+        throw data.message;
+      }
+      return data.data.testString;
+    } catch (error) {
+      throw typeof error === 'string' ? error : 'Failed to get test string';
     }
-    
-    // Return the raw text instead of parsing as JSON
-    return response.text();
   }
 };
 
-// Password Reset APIs (no auth required)
+// Password Reset APIs
 export const passwordResetAPI = {
   requestReset: async (email) => {
-    const response = await fetch(
-      buildUrl('/password-reset/request'),
-      requestConfig.withJson({
-        method: 'POST',
-        body: JSON.stringify({ email })
-      })
-    );
-    const text = await response.text();
-    if (!response.ok) {
-      throw new Error(text);
+    try {
+      const response = await fetch(
+        buildUrl('/password-reset/request'),
+        requestConfig.withJson({
+          method: 'POST',
+          body: JSON.stringify({ email })
+        })
+      );
+      const data = await handleResponse(response);
+      if (!data.success) {
+        throw data.message;
+      }
+      return true;
+    } catch (error) {
+      throw typeof error === 'string' ? error : 'Failed to request password reset';
     }
-    return text;
   },
 
   verifyToken: async (email, token) => {
-    const response = await fetch(
-      buildUrl('/password-reset/verify'),
-      requestConfig.withJson({
-        method: 'POST',
-        body: JSON.stringify({ email, token })
-      })
-    );
-    return handleResponse(response);
+    try {
+      const response = await fetch(
+        buildUrl('/password-reset/verify'),
+        requestConfig.withJson({
+          method: 'POST',
+          body: JSON.stringify({ email, token })
+        })
+      );
+      const data = await handleResponse(response);
+      if (!data.success) {
+        throw data.message;
+      }
+      return data.data.valid;
+    } catch (error) {
+      throw typeof error === 'string' ? error : 'Failed to verify token';
+    }
   },
 
   resetPassword: async (email, token, newPassword) => {
-    const response = await fetch(
-      buildUrl('/password-reset/reset'),
-      requestConfig.withJson({
-        method: 'POST',
-        body: JSON.stringify({ email, token, newPassword })
-      })
-    );
-    return handleResponse(response);
+    try {
+      const response = await fetch(
+        buildUrl('/password-reset/reset'),
+        requestConfig.withJson({
+          method: 'POST',
+          body: JSON.stringify({ email, token, newPassword })
+        })
+      );
+      const data = await handleResponse(response);
+      if (!data.success) {
+        throw data.message;
+      }
+      return true;
+    } catch (error) {
+      throw typeof error === 'string' ? error : 'Failed to reset password';
+    }
   }
 };
 
-// Password Management APIs (all require auth)
+// Password Management APIs
 export const passwordAPI = {
   getDashboard: async () => {
-    const response = await fetch(
-      buildUrl('/passwords/dashboard'),
-      requestConfig.withAuth()
-    );
-    return handleResponse(response);
+    try {
+      const response = await fetch(
+        buildUrl('/passwords/dashboard'),
+        requestConfig.withAuth()
+      );
+      const data = await handleResponse(response);
+      if (!data.success) {
+        throw data.message;
+      }
+      return data.data;
+    } catch (error) {
+      throw typeof error === 'string' ? error : 'Failed to load passwords';
+    }
   },
 
   getPasswordById: async (id) => {
-    const response = await fetch(
-      buildUrl(`/passwords/${id}`),
-      requestConfig.withAuth()
-    );
-    return handleResponse(response);
+    try {
+      const response = await fetch(
+        buildUrl(`/passwords/${id}`),
+        requestConfig.withAuth()
+      );
+      const data = await handleResponse(response);
+      if (!data.success) {
+        throw data.message;
+      }
+      return data.data;
+    } catch (error) {
+      throw typeof error === 'string' ? error : 'Failed to load password';
+    }
   },
 
   savePassword: async (websiteUrl, websiteName, username, encryptedPassword) => {
-    const data = {
-      websiteUrl,
-      websiteName,
-      username,
-      password: encryptedPassword
-    };
-
-    const response = await fetch(
-      buildUrl('/passwords'),
-      requestConfig.withAuth(requestConfig.withJson({
-        method: 'POST',
-        body: JSON.stringify(data)
-      }))
-    );
-    return handleResponse(response);
+    try {
+      const response = await fetch(
+        buildUrl('/passwords'),
+        requestConfig.withAuth(requestConfig.withJson({
+          method: 'POST',
+          body: JSON.stringify({
+            websiteUrl,
+            websiteName,
+            username,
+            password: encryptedPassword
+          })
+        }))
+      );
+      const data = await handleResponse(response);
+      if (!data.success) {
+        throw data.message;
+      }
+      return data.data;
+    } catch (error) {
+      throw typeof error === 'string' ? error : 'Failed to save password';
+    }
   },
 
   updatePassword: async (id, encryptedPassword, websiteUrl, websiteName, username) => {
-    const data = {
-      newPassword: encryptedPassword,
-      websiteUrl,
-      websiteName,
-      username
-    };
-
-    const response = await fetch(
-      buildUrl(`/passwords/${id}`),
-      requestConfig.withAuth(requestConfig.withJson({
-        method: 'PUT',
-        body: JSON.stringify(data)
-      }))
-    );
-    return handleResponse(response);
+    try {
+      const response = await fetch(
+        buildUrl(`/passwords/${id}`),
+        requestConfig.withAuth(requestConfig.withJson({
+          method: 'PUT',
+          body: JSON.stringify({
+            newPassword: encryptedPassword,
+            websiteUrl,
+            websiteName,
+            username
+          })
+        }))
+      );
+      const data = await handleResponse(response);
+      if (!data.success) {
+        throw data.message;
+      }
+      return data.data;
+    } catch (error) {
+      throw typeof error === 'string' ? error : 'Failed to update password';
+    }
   },
 
   deletePassword: async (id) => {
-    const response = await fetch(
-      buildUrl(`/passwords/${id}`),
-      requestConfig.withAuth({
-        method: 'DELETE'
-      })
-    );
-    return handleResponse(response);
+    try {
+      const response = await fetch(
+        buildUrl(`/passwords/${id}`),
+        requestConfig.withAuth({
+          method: 'DELETE'
+        })
+      );
+      const data = await handleResponse(response);
+      if (!data.success) {
+        throw data.message;
+      }
+      return true;
+    } catch (error) {
+      throw typeof error === 'string' ? error : 'Failed to delete password';
+    }
   }
 };

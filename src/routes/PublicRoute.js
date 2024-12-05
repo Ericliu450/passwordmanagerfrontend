@@ -6,7 +6,6 @@ function PublicRoute({ children }) {
   const location = useLocation();
 
   if (isAuthenticated) {
-    // Redirect to the page they came from, or dashboard as a fallback
     const from = location.state?.from?.pathname || '/dashboard';
     return <Navigate to={from} replace />;
   }

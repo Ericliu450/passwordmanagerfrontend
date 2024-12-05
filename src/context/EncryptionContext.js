@@ -1,4 +1,4 @@
-import React, { createContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useState, useCallback} from 'react';
 import CryptoJS from 'crypto-js';
 import { userAPI } from '../services/api';
 
@@ -26,12 +26,8 @@ export function EncryptionProvider({ children }) {
       const testString = `VALID_${Date.now()}`;
       const encryptedTest = CryptoJS.AES.encrypt(testString, key).toString();
 
-      // Store the test string using the API - now properly handling JSON response
-      const response = await userAPI.setTestString(email, encryptedTest);
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to setup master password');
-      }
+      // Store the test string using the API
+      await userAPI.setTestString(email, encryptedTest);
 
       // Store the key in memory and sessionStorage
       setMasterKey(key);
@@ -40,19 +36,16 @@ export function EncryptionProvider({ children }) {
       return true;
     } catch (error) {
       console.error('Setup master password error:', error);
-      throw new Error(error.message || 'Failed to setup master password');
+      throw typeof error === 'string' ? error : 'Failed to setup master password';
     }
   }, [generateEncryptionKey]);
 
-  // Updated verifyMasterPassword function in EncryptionContext.js
-  // In EncryptionContext.js
-
-const verifyMasterPassword = useCallback(async (email, masterPassword) => {
+  const verifyMasterPassword = useCallback(async (email, masterPassword) => {
     try {
       // Regenerate the key
       const key = generateEncryptionKey(masterPassword, email);
       
-      // Get the test string - it's returned directly as a string
+      // Get the test string
       const encryptedTest = await userAPI.getTestString(email);
       
       if (!encryptedTest) {
@@ -77,9 +70,12 @@ const verifyMasterPassword = useCallback(async (email, masterPassword) => {
       return false;
     } catch (error) {
       console.error('Master password verification failed:', error);
+      if (typeof error === 'string') {
+        throw error;
+      }
       return false;
     }
-}, [generateEncryptionKey]);
+  }, [generateEncryptionKey]);
 
   const encryptPassword = useCallback((password) => {
     if (!masterKey) {
